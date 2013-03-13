@@ -9,6 +9,11 @@ Puppet::Type.type(:package).provide :cpanm, :parent => Puppet::Provider::Package
   confine  :exists => ['/usr/bin/cpanm', '/usr/bin/perldoc']
   commands :cpanm  => '/usr/bin/cpanm'
 
+  # puppet requires an instances method that returns all packages
+  # curently installed with this provider.
+
+  # want to try something that is more complete than perllocal
+
   # Return structured information about all installed Modules
   def self.instances
     packages = Array.new
@@ -17,24 +22,24 @@ Puppet::Type.type(:package).provide :cpanm, :parent => Puppet::Provider::Package
     module_name_re = %r{"Module" ((\w+(::)?)+)$}
     module_vers_re = %r{"VERSION: ((\d+\.?)+)}
 
-    # Shell out and parse `perldoc perllocal`
-    #
-    # If no perl modules are installed, perldoc will exit 1 and print "No
-    # documentation found for "perllocal" to stderr. In order to cope with
-    # this eventuality, we catch errors ('|| true') and redirect stderr.
-    execpipe '/usr/bin/perldoc -t perllocal 2>/dev/null || true' do |process|
-      process.collect do |line|
-        case line
-        when module_name_re
-          pkg_info = { :name => $1, :provider => name }
-        when module_vers_re
-          pkg_info[:ensure] = $1
-          packages << new(pkg_info)
-        else
-          next
-        end
+    # perllocal doesn't always have every module
+    # using a custom script that outputs the relevant info in a
+    # similar format.  Someone with more ruby knowledge probably could
+    # make this better
+
+    list = `perl -MExtUtils::Installed -e '$installed = ExtUtils::Installed->new();printf qq{"Module" %s\n"VERSION: %s"\n},$_,$installed->version($_) for $installed->modules'`
+    list.collect do |line|
+      case line
+      when module_name_re
+        pkg_info = { :name => $1, :provider => name }
+      when module_vers_re
+        pkg_info[:ensure] = $1
+        packages << new(pkg_info)
+      else
+        next
       end
     end
+    debug packages.inspect
     return packages
   end
 
@@ -49,6 +54,11 @@ Puppet::Type.type(:package).provide :cpanm, :parent => Puppet::Provider::Package
   # Install the module
   def install
     cpanm @resource[:name]
+  end
+
+  # update the module 
+  def update
+      cpanm @resource[:name]
   end
 
   # Return the latest available version of a particular module

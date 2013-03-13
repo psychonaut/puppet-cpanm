@@ -12,11 +12,10 @@ class cpanm::install::rhel {
     creates => "/usr/bin/cpanm",
     require => Package["perl"],
   }
-
-  Exec["install_cpanm_for_RHEL"] -> Package<| provider == cpanm |> # Class["edir_db"]
-
+  
   # http://docs.puppetlabs.com/puppet/2.7/reference/lang_relationships.html
 
+  Exec["install_cpanm_for_RHEL"] -> Package<| provider == cpanm |>
 
 }
   
