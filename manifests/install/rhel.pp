@@ -9,7 +9,7 @@ class cpanm::install::rhel {
     # user. Use /bin/su to work this around.
     # also added the -f option to force a reinstall of cpanm in case something is broken
     command => "/bin/su - -c 'umask 022; wget -O- http://cpanmin.us | /usr/bin/perl - App::cpanminus -f'",
-    creates => "/usr/bin/cpanm",
+    creates => "${::perl_installsitebin}/cpanm",
     require => Package["perl"],
   }
   
