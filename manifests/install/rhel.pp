@@ -1,7 +1,7 @@
 class cpanm::install::rhel {
   # install cpanm the hard way b/c RHEL doesn't have a package for this
   if ! defined(Package['perl'])  { package { 'perl': ensure => installed } }
-  if ! defined(Package["gcc"])   { package {"gcc": } ensure => installed } }
+  if ! defined(Package["gcc"])   { package { "gcc":  ensure => installed } }
  
   exec {"install_cpanm_for_RHEL":
     # puppet seems to change the current user weirdly when using the
