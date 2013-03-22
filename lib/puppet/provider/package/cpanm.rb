@@ -28,7 +28,7 @@ Puppet::Type.type(:package).provide :cpanm, :parent => Puppet::Provider::Package
     # make this better
 
     list = `perl -MExtUtils::Installed -e '$installed = ExtUtils::Installed->new();printf qq{"Module" %s\n"VERSION: %s"\n},$_,$installed->version($_) for $installed->modules'`
-    list.collect do |line|
+    list.split(/\n/).collect do |line|
       case line
       when module_name_re
         pkg_info = { :name => $1, :provider => name }
