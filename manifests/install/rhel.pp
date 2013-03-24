@@ -13,18 +13,8 @@ class cpanm::install::rhel {
     creates => "${::perl_installsitebin}/cpanm",
     require => Package["perl"],
   }
-  
+
   # http://docs.puppetlabs.com/puppet/2.7/reference/lang_relationships.html
-
-  if ( $::perl_installsitebin != "/usr/bin" ) {
-    file {"/usr/bin/cpanm":
-      ensure => link,
-      target => "/usr/local/bin/cpanm",
-      replace => false,
-      before => Exec["install_cpanm_for_RHEL"],
-    }
-  }
-
   Exec["install_cpanm_for_RHEL"] -> Package<| provider == cpanm |>
 
 }

@@ -6,8 +6,11 @@ Puppet::Type.type(:package).provide :cpanm, :parent => Puppet::Provider::Package
 
   has_feature :installable, :upgradeable
 
-  confine  :exists => ['/usr/bin/cpanm', '/usr/bin/perldoc']
-  commands :cpanm  => '/usr/bin/cpanm'
+  # cpanm_bin_path = Facter.value(:perl_installsitebin)
+  cpanm_bin_path = Facter.perl_installsitebin
+
+  confine  :exists => ["#{cpanm_bin_path}/cpanm", '/usr/bin/perldoc']
+  commands :cpanm  => "#{cpanm_bin_path}/cpanm"
 
   # puppet requires an instances method that returns all packages
   # curently installed with this provider.
@@ -22,7 +25,7 @@ Puppet::Type.type(:package).provide :cpanm, :parent => Puppet::Provider::Package
     module_name_re = %r{"Module" ((\w+(::)?)+)$}
     module_vers_re = %r{"VERSION: ((\d+\.?)+)}
 
-    # perllocal doesn't always have every module
+    # "perllocal does not always have every module
     # using a custom script that outputs the relevant info in a
     # similar format.  Someone with more ruby knowledge probably could
     # make this better
@@ -61,10 +64,15 @@ Puppet::Type.type(:package).provide :cpanm, :parent => Puppet::Provider::Package
       cpanm @resource[:name]
   end
 
+  # uninstall the module
+  # def uninstall
+  #  check out App::pmuninstall for a possible way to uninstall 
+  # end
+
   # Return the latest available version of a particular module
   def latest
     dist_re     = %r{(.*?)(\w+-?)+((\d+\.?)+)\.(\w+\.?)+}
-    latest_dist = %x{/usr/bin/cpanm --info #{@resource[:name]}}
+    latest_dist = %x{#{cpan_bin_path}/cpanm --info #{@resource[:name]}}
     if latest_dist =~ dist_re
       $3
     else
