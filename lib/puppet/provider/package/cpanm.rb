@@ -71,6 +71,9 @@ Puppet::Type.type(:package).provide :cpanm, :parent => Puppet::Provider::Package
 
   # Return the latest available version of a particular module
   def latest
+    # setting cpanm_bin_path here seems to fix the undefined local variable error
+    cpanm_bin_path = Facter.perl_installsitebin
+
     dist_re     = %r{(.*?)(\w+-?)+((\d+\.?)+)\.(\w+\.?)+}
     latest_dist = %x{#{cpanm_bin_path}/cpanm --info #{@resource[:name]}}
     if latest_dist =~ dist_re
