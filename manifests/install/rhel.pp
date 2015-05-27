@@ -7,20 +7,6 @@ class cpanm::install::rhel {
         ensure => installed,
     }
   }
-
-  # BELOW ONLY WORKS WITH BASH/SH, AND NOT ZSH
-  # Set the path for cpanm
-  file { '/etc/profile.d/cpanm.sh':
-      mode    => 644,
-      content => "PATH=/usr/local/sbin/:/usr/local/bin/:\$PATH",
-  }
-  -> 
-  # Have it take effect
-  exec { "source /etc/profile.d/cpanm.sh":
-      provider => shell,
-  }
-
-
   exec {"install_cpanm_for_RHEL":
     # puppet seems to change the current user weirdly when using the
     # user/group options. That causes cpanm to use /root/.cpanm for it's
