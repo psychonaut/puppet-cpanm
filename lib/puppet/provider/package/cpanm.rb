@@ -4,9 +4,22 @@ Puppet::Type.type(:package).provide :cpanm, :parent => Puppet::Provider::Package
 
   desc 'Install CPAN modules via `cpanm`'
 
-  has_feature :installable, :upgradeable
+  has_feature :versionable
+  has_feature :install_options
+  has_feature :uninstall_options
 
-  commands :cpanm  => "cpanm"
+  confine  :exists => ['/usr/bin/cpanm', '/usr/bin/perldoc']
+  commands :cpanm  => 'cpanm'
+
+  if command('cpanm')
+    confine :true => begin
+      cpanm('--version')
+      rescue Puppet::ExecutionFailure
+        false
+      else
+        true
+      end
+  end
 
   # puppet requires an instances method that returns all packages
   # curently installed with this provider.
@@ -25,17 +38,17 @@ Puppet::Type.type(:package).provide :cpanm, :parent => Puppet::Provider::Package
     # using a custom script that outputs the relevant info in a
     # similar format.  Someone with more ruby knowledge probably could
     # make this better
-
-    list = `perl -MExtUtils::Installed -e '$installed = ExtUtils::Installed->new();printf qq{"Module" %s\n"VERSION: %s"\n},$_,$installed->version($_) for $installed->modules'`
-    list.split(/\n/).collect do |line|
-      case line
-      when module_name_re
-        pkg_info = { :name => $1, :provider => name }
-      when module_vers_re
-        pkg_info[:ensure] = $1
-        packages << new(pkg_info)
-      else
-        next
+    execpipe %q[perl -MExtUtils::Installed -e '$installed = ExtUtils::Installed->new(skip_cwd=>1);printf qq{"Module" %s\n"VERSION: %s"\n},$_,$installed->version($_) for $installed->modules'] do |process|
+      process.collect do |line|
+        case line
+        when module_name_re
+          pkg_info = { :name => $1, :provider => name }
+        when module_vers_re
+          pkg_info[:ensure] = $1
+          packages << new(pkg_info)
+        else
+          next
+        end
       end
     end
     debug packages.inspect
@@ -52,18 +65,23 @@ Puppet::Type.type(:package).provide :cpanm, :parent => Puppet::Provider::Package
 
   # Install the module
   def install
-    cpanm @resource[:name]
+    if resource[:ensure].is_a? Symbol
+      package = resource[:name]
+    else
+      package = "#{resource[:name]}@#{resource[:ensure]}"
+    end
+    cpanm(['--quiet', '--notest', package])
   end
 
-  # update the module 
+  # update the module
   def update
       cpanm @resource[:name]
   end
 
-  # uninstall the module
-  # def uninstall
-  #  check out App::pmuninstall for a possible way to uninstall 
-  # end
+  # Uninstall the module
+  def uninstall
+    cpanm(['--quiet', '--uninstall', @resource[:name]])
+  end
 
   # Return the latest available version of a particular module
   def latest
