@@ -10,6 +10,10 @@ It assumes `cpanminus` can be found at /usr/bin, currently, and provides a puppe
 
     package { 'MooseX::App::Cmd': ensure => latest, provider => 'cpanm' }
 
+## rpm package for CentOS7
+
+Spec file for building rpm file: https://gist.github.com/psychonaut/3810976f2e024b90cae616b5521233ec
+
 ## License
 
 Apache License, version 2.0
